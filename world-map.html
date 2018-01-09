@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <title>World Hop</title>
     <meta charset="utf-8">
     <script src="lib/d3.v3.min.js"></script>
     <script src="lib/topojson.min.js"></script>
@@ -55,7 +56,8 @@
            .attr("class", "choropleth")
            .attr("d", path);
 
-        var g = svg.append("g");
+        var g = svg.append("g")
+          .attr("class", "countries");
 
         g.append("path")
          .datum({type: "LineString", coordinates: [[-180, 0], [-90, 0], [0, 0], [90, 0], [180, 0]]})
@@ -67,10 +69,10 @@
 
           var country = g.selectAll(".country").data(countries);
 
-          country.enter().insert("path")
-              .attr("class", "country")
-              .attr("d", path);
-
+          country.enter()
+            .insert("path")
+            .attr("class", "country")
+            .attr("d", path);
 
           g.append("path")
               .datum(topojson.mesh(world, world.objects.countries, function(a, b) { return a !== b; }))
@@ -78,8 +80,21 @@
               .attr("d", path);
 
 
-        });
+          // pick random country
+          var randomCountry = countries[Math.floor(Math.random() * countries.length)];
 
+          g.append("svg:circle")
+            .attr("class", "circle")
+            .attr("cx", path.centroid(randomCountry)[0])
+            .attr("cy", path.centroid(randomCountry)[1])
+            .attr("r", 100)
+            .style("fill", "#f00")
+            .style("opacity", "0.4")
+            .transition().delay(1000).style("opacity", "0.6").attr("r", 50)
+            .transition().delay(1000).style("opacity", "0.8").attr("r", 25)
+            .transition().delay(1000).style("opacity", "1.0").style("stroke", "#fff").attr("r", 2);
+            ;
+        });
       })();
     </script>
   </body>
