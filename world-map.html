@@ -39,7 +39,7 @@
     <div id="canvas-svg"></div>
 
     <script>
-      (() => {
+      (function() {
 
         const width = document.documentElement.clientWidth;
         const height = document.documentElement.clientHeight;
@@ -92,17 +92,17 @@
 
           const previousCountries = [];
 
-          setInterval(() => {
+          setInterval(function() {
             var randomCountry = countries[Math.floor(Math.random() * countries.length)];
             if (!randomCountry.geometry) {
               return;
             }
 
-            console.log(`Marking new random country: ${randomCountry.properties.name}`, randomCountry, path.centroid(randomCountry));
+            console.log("Marking new random country: " + randomCountry.properties.name, randomCountry, path.centroid(randomCountry));
 
             svg.append("svg:circle")
               .attr("class", "circle")
-              .attr("id", `country${randomCountry.id}`)
+              .attr("id", "country" + randomCountry.id)
               .attr("cx", path.centroid(randomCountry)[0])
               .attr("cy", path.centroid(randomCountry)[1])
               .attr("r", 100)
@@ -118,7 +118,7 @@
               // draw a line from the previous country to the new one
               const origin = previousCountries[previousCountries.length - 1];
               const target = randomCountry;
-              console.log(`Drawing great circle line from ${origin.properties.name} to ${target.properties.name}`, origin, target);
+              console.log("Drawing great circle line from " + origin.properties.name + " to " + target.properties.name, origin, target);
               const greatArc = {
                 "type": "LineString",
                 "coordinates": [
@@ -129,7 +129,7 @@
 
               svg.append("path")
                .datum(greatArc)
-               .attr("id", `lineFromCountry${origin.id}`)
+               .attr("id", "lineFromCountry" + origin.id)
                .attr("d", path)
                .attr("class", "line")
                .attr("stroke-dasharray", "5,5")
@@ -146,13 +146,13 @@
             if (previousCountries.length > 10) {
               // trim list of points of interest
               const firstCountry = previousCountries.shift();
-              console.log(`Removing ${firstCountry.properties.name}`, firstCountry);
-              d3.select(`#country${firstCountry.id}`)
+              console.log("Removing " + firstCountry.properties.name, firstCountry);
+              d3.select("#country" + firstCountry.id)
                 .transition()
                 .duration(2000)
                 .style("opacity", "0.0")
                 .remove();
-              d3.select(`#lineFromCountry${firstCountry.id}`)
+              d3.select("#lineFromCountry" + firstCountry.id)
                 .transition()
                 .duration(2000)
                 .style("opacity", "0.0")
