@@ -91,21 +91,48 @@
 
 
           // pick random country
-          var randomCountry = countries[Math.floor(Math.random() * countries.length)];
+          var previousCountry;
+          setInterval(() => {
+            var randomCountry = countries[Math.floor(Math.random() * countries.length)];
+            console.log(`Marking new random country: ${randomCountry.properties.name}`, randomCountry, path.centroid(randomCountry));
 
-          g.append("svg:circle")
-            .attr("class", "circle")
-            .attr("cx", path.centroid(randomCountry)[0])
-            .attr("cy", path.centroid(randomCountry)[1])
-            .attr("r", 100)
-            .style("fill", "#f00")
-            .style("opacity", "0.4")
-            .transition().delay(1000).style("opacity", "0.6").attr("r", 50)
-            .transition().delay(1000).style("opacity", "0.8").attr("r", 25)
-            .transition().delay(1000).style("opacity", "1.0").style("stroke", "#fff").attr("r", 2);
-            ;
+            if (!randomCountry.geometry) {
+              return;
+            }
+
+            g.append("svg:circle")
+              .attr("class", "circle")
+              .attr("cx", path.centroid(randomCountry)[0])
+              .attr("cy", path.centroid(randomCountry)[1])
+              .attr("r", 100)
+              .style("fill", "#f00")
+              .style("opacity", "0.0")
+              .transition().delay(1000).style("opacity", "0.5")
+              .transition().delay(1000).style("opacity", "1.0").style("stroke", "#fff").attr("r", 2);
+
+            if (previousCountry) {
+              // draw a line from the previous country to the new one
+              setTimeout(drawLine(g, path, previousCountry, randomCountry), 2500);
+            }
+
+            previousCountry = randomCountry;
+
+          }, 5000);
         });
       })();
+
+      function drawLine(g, path, countryA, countryB) {
+        return () => {
+          console.log(`Drawing the line from ${countryA.properties.name} to ${countryB.properties.name}`, countryA, countryB);
+          g.append("line")
+            .attr("x1", path.centroid(countryA)[0])
+            .attr("y1", path.centroid(countryA)[1])
+            .attr("x2", path.centroid(countryB)[0])
+            .attr("y2", path.centroid(countryB)[1])
+            .attr("stroke-dasharray", "5,5")
+            .attr("class", "line");
+        };
+      }
     </script>
   </body>
 </html>
