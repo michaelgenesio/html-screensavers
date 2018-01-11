@@ -6,9 +6,6 @@
     <script src="lib/d3.v4.min.js"></script>
     <script src="lib/d3-geo.v1.min.js"></script>
     <script src="lib/topojson.min.js"></script>
-
-    <!-- load various modules -->
-    <script src="world-hop.js"></script>
     <style>
       html {
         height: 100%;
@@ -23,8 +20,8 @@
       }
 
       svg {
-        width: 100%;
-        height: 100%;
+        width: 50%;
+        height: 50%;
       }
 
     </style>
@@ -34,6 +31,9 @@
     <svg id="svg"></svg>
 
     <div id="debug" style="white-space: pre;"></div>
+
+    <!-- load various modules -->
+    <script src="world-hop.js"></script>
 
     <script>
       const svg = document.getElementById("svg");
