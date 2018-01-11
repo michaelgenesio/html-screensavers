@@ -1,0 +1,30 @@
+ <style>
+ body {
+  background: black;
+  color: white;
+}
+</style>
+
+    <script src="lib/d3.v4.min.js"></script>
+    <script src="lib/d3-geo.v1.min.js"></script>
+    <script src="lib/topojson.min.js"></script>
+
+
+<svg  xmlns="http://www.w3.org/2000/svg"
+      xmlns:xlink="http://www.w3.org/1999/xlink">
+    <rect x="10" y="10" height="100" width="100"
+          style="stroke:#ff0000; fill: #0000ff"/>
+</svg>
+
+<div id="debug" style="white-space: pre;"></div>
+
+<script>
+
+  const width = document.documentElement.clientWidth;
+  const height = document.documentElement.clientHeight;
+  document.getElementById('debug').appendChild(document.createTextNode(height + " x " + width));
+
+
+
+
+</script>
