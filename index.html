@@ -19,7 +19,12 @@
         height: 100%;
       }
 
-      svg {
+      .content {
+        width: 100%;
+        height: 100%;
+      }
+
+      .content svg {
         width: 100%;
         height: 100%;
       }
@@ -28,17 +33,28 @@
   </head>
   <body>
 
-    <svg id="svg"></svg>
+    <div class="content">
+    </div>
 
     <div id="debug" style="white-space: pre;"></div>
 
     <!-- load various modules -->
     <script src="world-hop.js"></script>
+    <script src="world-infector.js"></script>
+    <script src="big-circle.js"></script>
 
     <script>
-      const svg = document.getElementById("svg");
-      const worldHop = new WorldHop(svg);
-      worldHop.start();
+      const content = document.getElementsByClassName("content")[0];
+
+      const modules = [
+        WorldInfector,
+        // WorldHop,
+        // BigCircle,
+      ];
+
+      const randomModule = modules[Math.floor(Math.random() * modules.length)];
+      const module = new randomModule(content);
+      module.start();
     </script>
 
 

@@ -1,8 +1,11 @@
-const WorldHop = function(svg) {
-  const width = svg.clientWidth;
-  const height = svg.clientHeight;
+const WorldHop = function(contentDiv) {
+  const width = contentDiv.clientWidth;
+  const height = contentDiv.clientHeight;
 
-  this.svg = d3.select(svg);
+  this.svg = d3.select(contentDiv)
+    .append("svg")
+    .attr("width", width)
+    .attr("height", height);
 
   this.projection = d3.geoNaturalEarth1()
     .scale((width + 1) / 2 / Math.PI)
