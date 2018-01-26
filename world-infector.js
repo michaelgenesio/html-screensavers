@@ -144,35 +144,66 @@ WorldInfector.prototype.drawInfection = function() {
     destinations.splice(0, 1);
   }
 
-  const originPoints = this.path.centroid({ "type": "Point", "coordinates": [that.origin.lon, that.origin.lat]});
+  console.log("Drawing infection from ", that.origin, "to", destinations);
+
+  const originPoints = that.path.centroid({ "type": "Point", "coordinates": [that.origin.lon, that.origin.lat]});
 
   // draw origin city
-  drawCityCircle(this.gCircles, that.origin.name, originPoints)
+  drawCityCircle(that.gCircles, that.origin.name, originPoints)
     .attr("r", 10)
     .style("opacity", "1.0");
 
+  var transitions = 0;
+
   // draw arcs
-  destinations.map(function(destination) {
-    const destinationPoints = that.path.centroid({ "type": "Point", "coordinates": [destination.lon, destination.lat]});
-    const distance = lineDistance(originPoints, destinationPoints);
+  const lines = that.gLines
+    .selectAll("path")
+    .data(destinations);
 
-    console.log("Drawing line from ", originPoints, "to", destinationPoints);
-
-    that.gLines
+  lines.enter()
       .append("path")
-      .attr("d", line(originPoints, destinationPoints))
-      .attr("stroke-dasharray", "0," + distance)
+      .attr("d", function (destination) {
+        const destinationPoints = that.path.centroid({ "type": "Point", "coordinates": [destination.lon, destination.lat]});
+        return line(originPoints, destinationPoints);
+      })
+      .attr("stroke-dasharray", function(destination) {
+        const destinationPoints = that.path.centroid({ "type": "Point", "coordinates": [destination.lon, destination.lat]});
+        const distance = lineDistance(originPoints, destinationPoints);
+        return "0," + distance;
+      })
       .transition()
+        .on("start", function(d, i) {
+          console.log('Beginning transition', d, i);
+          transitions++;
+        })
         .delay(500)
         .duration(2000)
         .ease(d3.easeLinear)
-        .attr("stroke-dasharray", distance + "," + distance)
-        .on("end", function() {
+        .attr("stroke-dasharray", function(destination) {
+          const destinationPoints = that.path.centroid({ "type": "Point", "coordinates": [destination.lon, destination.lat]});
+          const distance = lineDistance(originPoints, destinationPoints);
+          return distance + "," + distance;
+        })
+        .on("end", function(destination) {
+          const destinationPoints = that.path.centroid({ "type": "Point", "coordinates": [destination.lon, destination.lat]});
           drawCityCircle(that.gCircles, destination, destinationPoints)
             .attr("r", 5)
             .style("opacity", "1.0");
+
+          if (!--transitions) {
+            console.log("Transitions done.");
+            // pick one destination as the new origin
+            that.origin = chooseOne(destinations);
+            setTimeout(that.drawInfection.bind(that), 5000);
+          }
         });
-  });
+  lines.exit()
+    .transition()
+    .attr("opacity", "0.0")
+    .on("start", function(d, i) {
+      console.log('exit transitioning', d);
+    })
+    .remove();
 }
 
 function drawCityCircle(group, name, xyCoordinates) {
