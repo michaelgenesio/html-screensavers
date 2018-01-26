@@ -58,26 +58,6 @@ const cities = [
   { name: "Winnipeg", lat: 49.899, lon: -97.139, },
 ];
 
-function chooseOne(source) {
-  return source[Math.floor(Math.random() * source.length)];
-}
-
-function chooseSome(source, count) {
-  if (count >= source.length) {
-    return source.slice();
-  }
-
-  const copy = source.slice();
-  var result = [];
-
-  while(count-- > 0) {
-    result = result.concat(copy.splice(Math.floor(Math.random() * copy.length), 1));
-  }
-
-  return result;
-}
-
-
 const WorldInfector = function(contentDiv) {
   const width = contentDiv.clientWidth;
   const height = contentDiv.clientHeight;
@@ -85,7 +65,8 @@ const WorldInfector = function(contentDiv) {
   this.svg = d3.select(contentDiv)
     .append("svg")
     .attr("width", width)
-    .attr("height", height);
+    .attr("height", height)
+    .style("background-color", "#003366");
 
   this.projection = d3.geoNaturalEarth1()
     .scale((width + 1) / 2 / Math.PI)
@@ -95,18 +76,22 @@ const WorldInfector = function(contentDiv) {
   this.path = d3.geoPath(this.projection);
 
   this.gCountries = this.svg.append("g")
-    .attr("fill", "#006600")
-    .attr("stroke", "#009900")
-    .attr("stroke-width", "1");
+    .attr("class", "gCountries")
+    .attr("fill", "#6699CC")
+    .attr("stroke", "#336699")
+    .attr("stroke-width", "0.5");
 
   this.gCircles = this.svg.append("g")
-    .attr("fill", "#f00")
-    .attr("stroke", "#fff");
+    .attr("class", "gCircles")
+    .attr("fill", "#8A7090")
+    .attr("stroke", "#8D3B72");
 
   this.gLines = this.svg.append("g")
-    .attr("stroke-dasharray", "5,5")
+    .attr("class", "gLines")
+    // .attr("stroke-dasharray", "10,10")
+    // .attr("stroke-dashoffset", "10")
     .attr("fill", "none")
-    .attr("stroke", "#ff0000")
+    .attr("stroke", "#8D3B72")
     .attr("stroke-width", "3");
 };
 
@@ -150,32 +135,107 @@ WorldInfector.prototype.createMap = function(world) {
 WorldInfector.prototype.drawInfection = function() {
   const that = this;
   // choose destinations
-  const destinations = chooseSome(cities, 5);
+  const destinations = chooseSome(cities, 6);
   // make sure we didn't choose our origin
-  if (destinations.includes(this.origin)) {
-    destinations.splice(destinations.indexOf(this.origin), 1);
+  if (destinations.includes(that.origin)) {
+    destinations.splice(destinations.indexOf(that.origin), 1);
+  } else {
+    // trim it down to 5 anyway.
+    destinations.splice(0, 1);
   }
 
-  const originPoints = this.path.centroid({ "type": "Point", "coordinates": [this.origin.lon, this.origin.lat]});
+  const originPoints = this.path.centroid({ "type": "Point", "coordinates": [that.origin.lon, that.origin.lat]});
 
   // draw origin city
-  console.log(this.origin, originPoints);
-  this.gCircles.append("svg:circle")
-    .attr("id", "city" + this.origin.name)
-    .attr("cx", originPoints[0])
-    .attr("cy", originPoints[1])
-    .attr("r", 50)
+  drawCityCircle(this.gCircles, that.origin.name, originPoints)
+    .attr("r", 10)
     .style("opacity", "1.0");
 
-  // draw destinations
+  // draw arcs
   destinations.map(function(destination) {
-      const destinationPoints = that.path.centroid({ "type": "Point", "coordinates": [destination.lon, destination.lat]});
+    const destinationPoints = that.path.centroid({ "type": "Point", "coordinates": [destination.lon, destination.lat]});
+    const distance = lineDistance(originPoints, destinationPoints);
 
-      that.gCircles.append("svg:circle")
-        .attr("id", "city" + destination.name)
-        .attr("cx", destinationPoints[0])
-        .attr("cy", destinationPoints[1])
-        .attr("r", 10)
-        .style("opacity", "1.0");
+    console.log("Drawing line from ", originPoints, "to", destinationPoints);
+
+    that.gLines
+      .append("path")
+      .attr("d", line(originPoints, destinationPoints))
+      .attr("stroke-dasharray", "0," + distance)
+      .transition()
+        .delay(500)
+        .duration(2000)
+        .ease(d3.easeLinear)
+        .attr("stroke-dasharray", distance + "," + distance)
+        .on("end", function() {
+          drawCityCircle(that.gCircles, destination, destinationPoints)
+            .attr("r", 5)
+            .style("opacity", "1.0");
+        });
   });
+}
+
+function drawCityCircle(group, name, xyCoordinates) {
+  return group.append("svg:circle")
+    .attr("id", "city" + name)
+    .attr("cx", xyCoordinates[0])
+    .attr("cy", xyCoordinates[1]);
+}
+
+function lineDistance(origin, destination) {
+  const dx = destination[0] - origin[0],
+        dy = destination[1] - origin[1],
+        dr = Math.floor(Math.sqrt(dx * dx + dy * dy));
+  const circumference = 2 * Math.PI * dr;
+  const arcLength = circumference / 6;
+  return arcLength;
+}
+
+// returns a SVG Path string representing an arc from origin to destination
+function line(origin, destination) {
+  const dx = destination[0] - origin[0],
+        dy = destination[1] - origin[1],
+        dr = Math.floor(Math.sqrt(dx * dx + dy * dy)),
+        rotation = 0,
+        largeArc = 0,
+        sweep = 1;
+
+  return "M " + Math.floor(origin[0]) + "," + Math.floor(origin[1])
+     + " A " + dr + "," + dr + " " + rotation + " " + largeArc + " " + sweep + " " + Math.floor(destination[0]) + "," + Math.floor(destination[1]);
+  // return "M" + origin[0] + "," + origin[1] + " L" + destination[0] + "," + destination[1];
+
+}
+
+function linkArc(d) {
+  const originPoints = this.path.centroid({ "type": "Point", "coordinates": [this.origin.lon, this.origin.lat]});
+  const destinationPoints = this.path.centroid({ "type": "Point", "coordinates": [d.lon, d.lat]});
+
+  const dx = destinationPoints[0] - originPoints[0],
+        dy = destinationPoints[1] - originPoints[1],
+        dr = Math.sqrt(dx * dx + dy * dy);
+  const rotation = 0;
+  const largeArc = 0;
+  const sweep = 1;
+
+  return "M" + originPoints[0] + "," + originPoints[1] + "A" + dr + "," + dr + " " + rotation + " " + largeArc + " " + sweep + " " + destinationPoints[0] + "," + destinationPoints[1];
+}
+
+
+function chooseOne(source) {
+  return source[Math.floor(Math.random() * source.length)];
+}
+
+function chooseSome(source, count) {
+  if (count >= source.length) {
+    return source.slice();
+  }
+
+  const copy = source.slice();
+  var result = [];
+
+  while(count-- > 0) {
+    result = result.concat(copy.splice(Math.floor(Math.random() * copy.length), 1));
+  }
+
+  return result;
 }
